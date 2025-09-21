@@ -1,0 +1,511 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* === GEMINI VISUAL THEME === */
+
+/* 1. Core Color Variables */
+:root {
+  /* Primary Background */
+  --gemini-deep-blue: #04061a;
+  
+  /* Typography */
+  --starlight-white: #f0f2fc;
+  --nebula-grey: #8a91b4;
+  
+  /* Gradient Accent Colors */
+  --core-spark-blue: #5865f2;
+  --vibrant-magenta: #d548a5;
+  --electric-aqua: #24d8da;
+  --electric-rose: #ff416c;
+  
+  /* The Gemini Gradient */
+  --gemini-gradient: linear-gradient(135deg, #5865f2, #d548a5, #24d8da);
+}
+
+/* 2. Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--gemini-deep-blue);
+  color: var(--starlight-white);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+
+/* Scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(138,145,180,0.3);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(36,216,218,0.5);
+}
+
+/* 3. Typography */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--starlight-white);
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+}
+
+p, span, div {
+  color: var(--starlight-white);
+}
+
+.gemini-gradient-text {
+  background: var(--gemini-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+  font-weight: 800;
+}
+
+.secondary-text {
+  color: var(--nebula-grey);
+}
+
+/* 4. Button System */
+.btn-primary {
+  background: var(--gemini-gradient);
+  color: var(--starlight-white);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 8px 32px rgba(88, 101, 242, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background-color: var(--core-spark-blue);
+  color: var(--starlight-white);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background-color: #6b73ff;
+  box-shadow: 0 4px 20px rgba(88, 101, 242, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--starlight-white);
+  border: 1px solid var(--nebula-grey);
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-ghost:hover {
+  border-color: var(--electric-aqua);
+  color: var(--electric-aqua);
+  box-shadow: 0 4px 20px rgba(36, 216, 218, 0.2);
+}
+
+/* 5. Cards and Surfaces */
+.gemini-card {
+  background: rgba(240, 242, 252, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(138, 145, 180, 0.2);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.gemini-card:hover {
+  background: rgba(240, 242, 252, 0.08);
+  border-color: rgba(36, 216, 218, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(4, 6, 26, 0.3);
+}
+
+/* Legacy compatibility */
+.glass-card {
+  background: rgba(240, 242, 252, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(138, 145, 180, 0.2);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  background: rgba(240, 242, 252, 0.08);
+  border-color: rgba(36, 216, 218, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(4, 6, 26, 0.3);
+}
+
+/* Risk Badges */
+.risk-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.risk-low {
+  background: rgba(36, 216, 218, 0.15);
+  color: var(--electric-aqua);
+  border: 1px solid rgba(36, 216, 218, 0.3);
+}
+
+.risk-medium {
+  background: rgba(213, 72, 165, 0.15);
+  color: var(--vibrant-magenta);
+  border: 1px solid rgba(213, 72, 165, 0.3);
+}
+
+.risk-high {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* 6. Form Elements */
+.gemini-input {
+  background: rgba(240, 242, 252, 0.05);
+  border: 1px solid var(--nebula-grey);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--starlight-white);
+  font-size: 16px;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.gemini-input::placeholder {
+  color: var(--nebula-grey);
+}
+
+.gemini-input:focus {
+  outline: none;
+  border-color: var(--core-spark-blue);
+  background: rgba(240, 242, 252, 0.08);
+  box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.1);
+}
+
+/* 7. Links */
+.gemini-link {
+  color: var(--core-spark-blue);
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.gemini-link:hover {
+  color: var(--electric-aqua);
+  text-decoration: underline;
+}
+
+/* 8. Dropzone */
+.gemini-dropzone {
+  border: 2px dashed var(--nebula-grey);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: rgba(240, 242, 252, 0.02);
+}
+
+.gemini-dropzone:hover,
+.gemini-dropzone.drag-active {
+  border-color: var(--electric-aqua);
+  background: rgba(36, 216, 218, 0.05);
+  transform: scale(1.02);
+}
+
+.gemini-dropzone.uploading {
+  border-color: var(--core-spark-blue);
+  background: rgba(88, 101, 242, 0.05);
+}
+
+/* 9. Loading States */
+.gemini-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(240, 242, 252, 0.1);
+  border-top: 3px solid var(--core-spark-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.gemini-pulse {
+  animation: pulse 2s infinite;
+}
+
+/* 10. Typography Classes */
+.text-gradient {
+  background: var(--gemini-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.heading-xl {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+@media (min-width: 768px) {
+  .heading-xl {
+    font-size: 4rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .heading-xl {
+    font-size: 5rem;
+  }
+}
+
+/* 11. Animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.floating-animation {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* 12. Legacy compatibility classes */
+.professional-input {
+  background: rgba(240, 242, 252, 0.05);
+  border: 1px solid var(--nebula-grey);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--starlight-white);
+  font-size: 16px;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.professional-input::placeholder {
+  color: var(--nebula-grey);
+}
+
+.professional-input:focus {
+  outline: none;
+  border-color: var(--core-spark-blue);
+  background: rgba(240, 242, 252, 0.08);
+  box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.1);
+}
+
+.dropzone-professional {
+  border: 2px dashed var(--nebula-grey);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: rgba(240, 242, 252, 0.02);
+  position: relative;
+  overflow: hidden;
+}
+
+.dropzone-professional:hover,
+.dropzone-professional.dragActive {
+  border-color: var(--electric-aqua);
+  background: rgba(36, 216, 218, 0.05);
+  transform: scale(1.02);
+}
+
+/* 13. Responsive Design */
+@media (max-width: 768px) {
+  .gemini-card {
+    padding: 16px;
+  }
+  
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+  
+  .gemini-dropzone {
+    padding: 24px 16px;
+  }
+}
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: var(--shadow-md);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 65, 108, 0.6), var(--shadow-md);
+  }
+}
+
+@keyframes floating {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes fadeInUp {
+  0% { transform: translateY(30px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.floating-animation {
+  animation: floating 3s ease-in-out infinite;
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Scrollbar Styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--gradient-primary);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--gradient-secondary);
+}
+
+/* === CHAT LAYOUT IMPROVEMENTS === */
+
+/* Chat Container */
+.chat-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Messages Area */
+.messages-area {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  scroll-behavior: smooth;
+}
+
+/* Input Area Fixed at Bottom */
+.chat-input-area {
+  flex-shrink: 0;
+  border-top: 1px solid var(--nebula-grey);
+  background: var(--cosmic-background);
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 10;
+}
+
+/* Improved Input Field */
+.chat-input {
+  resize: none;
+  min-height: 80px;
+  max-height: 120px;
+  overflow-y: auto;
+  line-height: 1.5;
+  padding-right: 60px !important;
+}
+
+/* Send Button Positioning */
+.send-button {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  z-index: 20;
+}
+
+/* Prevent Layout Shifts */
+.chat-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-main {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.chat-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}

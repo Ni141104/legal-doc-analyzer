@@ -1,0 +1,243 @@
+"""
+Configuration management for the Legal Document Analyzer.
+Production-ready configuration for multi-agent Gen AI system.
+"""
+
+from pydantic import BaseModel
+from typing import Dict, List, Optional
+import os
+from functools import lru_cache
+
+
+class Settings(BaseModel):
+    """Production application configuration settings."""
+    
+    # Application
+    APP_NAME: str = "Legal Document Analyzer"
+    APP_VERSION: str = "1.0.0"
+    DEBUG: bool = False
+    LOG_LEVEL: str = "INFO"
+    ENVIRONMENT: str = "development"  # development, staging, production
+    
+    # API Configuration
+    API_HOST: str = "0.0.0.0"
+    API_PORT: int = 8080
+    API_WORKERS: int = 1
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key")
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    
+    # Request handling
+    MAX_FILE_SIZE_MB: int = 50
+    MAX_CONCURRENT_UPLOADS: int = 10
+    REQUEST_TIMEOUT_SECONDS: int = 300
+    
+    # CORS Configuration
+    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
+    ALLOW_CREDENTIALS: bool = True
+    
+    # Rate Limiting
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_REQUESTS_PER_MINUTE: int = 100
+    
+    # Google Cloud Platform
+    GOOGLE_CLOUD_PROJECT: str = os.getenv("GOOGLE_CLOUD_PROJECT", "")
+    GOOGLE_CLOUD_REGION: str = os.getenv("GOOGLE_CLOUD_REGION", "us-central1")
+    GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    
+    # Cloud Storage
+    GCS_BUCKET: str = os.getenv("GCS_BUCKET", "")
+    GCS_REGION: str = os.getenv("GCS_REGION", "us-central1")
+    
+    # Document AI
+    DOCUMENT_AI_PROCESSOR_ID: str = os.getenv("DOCUMENT_AI_PROCESSOR_ID", "")
+    DOCUMENT_AI_LOCATION: str = os.getenv("DOCUMENT_AI_LOCATION", "us")
+    
+    # Vertex AI
+    VERTEX_AI_LOCATION: str = os.getenv("VERTEX_AI_LOCATION", "us-central1")
+    VERTEX_EMBEDDING_MODEL: str = os.getenv("VERTEX_EMBEDDING_MODEL", "textembedding-gecko")
+    VERTEX_GENERATION_MODEL: str = os.getenv("VERTEX_GENERATION_MODEL", "gemini-pro")
+    GENERATION_TEMPERATURE: float = float(os.getenv("GENERATION_TEMPERATURE", "0.1"))
+    GENERATION_MAX_TOKENS: int = int(os.getenv("GENERATION_MAX_TOKENS", "2048"))
+    GENERATION_TOP_P: float = float(os.getenv("GENERATION_TOP_P", "0.95"))
+    
+    # Vertex AI Matching Engine
+    MATCHING_ENGINE_INDEX_ENDPOINT: str = os.getenv("MATCHING_ENGINE_INDEX_ENDPOINT", "")
+    MATCHING_ENGINE_DEPLOYED_INDEX_ID: str = os.getenv("MATCHING_ENGINE_DEPLOYED_INDEX_ID", "")
+    
+    # Elasticsearch Configuration
+    ELASTICSEARCH_HOST: str = os.getenv("ELASTICSEARCH_HOST", "localhost")
+    ELASTICSEARCH_PORT: int = int(os.getenv("ELASTICSEARCH_PORT", "9200"))
+    ELASTICSEARCH_INDEX: str = os.getenv("ELASTICSEARCH_INDEX", "legal_clauses")
+    ELASTICSEARCH_USERNAME: str = os.getenv("ELASTICSEARCH_USERNAME", "")
+    ELASTICSEARCH_PASSWORD: str = os.getenv("ELASTICSEARCH_PASSWORD", "")
+    ELASTICSEARCH_USE_SSL: bool = os.getenv("ELASTICSEARCH_USE_SSL", "true").lower() == "true"
+    
+    # Retrieval Configuration
+    RETRIEVAL_SPARSE_WEIGHT: float = float(os.getenv("RETRIEVAL_SPARSE_WEIGHT", "0.35"))
+    RETRIEVAL_DENSE_WEIGHT: float = float(os.getenv("RETRIEVAL_DENSE_WEIGHT", "0.40"))
+    RETRIEVAL_LABEL_WEIGHT: float = float(os.getenv("RETRIEVAL_LABEL_WEIGHT", "0.15"))
+    RETRIEVAL_JURISDICTION_WEIGHT: float = float(os.getenv("RETRIEVAL_JURISDICTION_WEIGHT", "0.05"))
+    RETRIEVAL_TEMPLATE_WEIGHT: float = float(os.getenv("RETRIEVAL_TEMPLATE_WEIGHT", "0.05"))
+    RETRIEVAL_TOP_K_CANDIDATES: int = int(os.getenv("RETRIEVAL_TOP_K_CANDIDATES", "50"))
+    RETRIEVAL_RERANK_TOP_K: int = int(os.getenv("RETRIEVAL_RERANK_TOP_K", "20"))
+    RETRIEVAL_FINAL_TOP_N: int = int(os.getenv("RETRIEVAL_FINAL_TOP_N", "8"))
+    
+    # HyDE Configuration
+    HYDE_ENABLED: bool = os.getenv("HYDE_ENABLED", "true").lower() == "true"
+    HYDE_TEMPERATURE: float = float(os.getenv("HYDE_TEMPERATURE", "0.3"))
+    
+    # Verification Configuration
+    VERIFICATION_THRESHOLD: float = float(os.getenv("VERIFICATION_THRESHOLD", "0.8"))
+    VERIFICATION_MODEL: str = os.getenv("VERIFICATION_MODEL", "textembedding-gecko")
+    
+    # Deterministic Extraction
+    ENABLE_DETERMINISTIC_EXTRACTION: bool = os.getenv("ENABLE_DETERMINISTIC_EXTRACTION", "true").lower() == "true"
+    EXTRACTION_CONFIDENCE_THRESHOLD: float = float(os.getenv("EXTRACTION_CONFIDENCE_THRESHOLD", "0.9"))
+    
+    # Cross-encoder Reranking
+    RERANKER_MODEL: str = os.getenv("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
+    RERANKER_ENABLED: bool = os.getenv("RERANKER_ENABLED", "true").lower() == "true"
+    
+    # Firestore Configuration
+    FIRESTORE_DATABASE: str = os.getenv("FIRESTORE_DATABASE", "(default)")
+    FIRESTORE_COLLECTION_DOCUMENTS: str = os.getenv("FIRESTORE_COLLECTION_DOCUMENTS", "documents")
+    FIRESTORE_COLLECTION_CLAUSES: str = os.getenv("FIRESTORE_COLLECTION_CLAUSES", "clauses")
+    FIRESTORE_COLLECTION_REVIEWS: str = os.getenv("FIRESTORE_COLLECTION_REVIEWS", "reviews")
+    FIRESTORE_COLLECTION_USERS: str = os.getenv("FIRESTORE_COLLECTION_USERS", "users")
+    
+    # PostgreSQL Configuration (optional)
+    POSTGRES_ENABLED: bool = os.getenv("POSTGRES_ENABLED", "false").lower() == "true"
+    POSTGRES_HOST: str = os.getenv("POSTGRES_HOST", "")
+    POSTGRES_PORT: int = int(os.getenv("POSTGRES_PORT", "5432"))
+    POSTGRES_DATABASE: str = os.getenv("POSTGRES_DATABASE", "legal_analyzer")
+    POSTGRES_USERNAME: str = os.getenv("POSTGRES_USERNAME", "")
+    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "")
+    POSTGRES_SSL_MODE: str = os.getenv("POSTGRES_SSL_MODE", "require")
+    
+    # BigQuery Configuration
+    BIGQUERY_DATASET: str = os.getenv("BIGQUERY_DATASET", "legal_doc_analyzer")
+    BIGQUERY_AUDIT_TABLE: str = os.getenv("BIGQUERY_AUDIT_TABLE", "audit_logs")
+    BIGQUERY_METRICS_TABLE: str = os.getenv("BIGQUERY_METRICS_TABLE", "metrics")
+    ENABLE_BIGQUERY_LOGGING: bool = os.getenv("ENABLE_BIGQUERY_LOGGING", "true").lower() == "true"
+    LOG_RETENTION_DAYS: int = int(os.getenv("LOG_RETENTION_DAYS", "30"))
+    
+    # KMS Configuration
+    ENABLE_KMS_ENCRYPTION: bool = os.getenv("ENABLE_KMS_ENCRYPTION", "true").lower() == "true"
+    KMS_KEY_RING: str = os.getenv("KMS_KEY_RING", "")
+    KMS_KEY_NAME: str = os.getenv("KMS_KEY_NAME", "")
+    KMS_LOCATION: str = os.getenv("KMS_LOCATION", "global")
+    
+    # Firebase Authentication
+    ENABLE_FIREBASE_AUTH: bool = os.getenv("ENABLE_FIREBASE_AUTH", "true").lower() == "true"
+    FIREBASE_PROJECT_ID: str = os.getenv("FIREBASE_PROJECT_ID", "")
+    FIREBASE_WEB_API_KEY: str = os.getenv("FIREBASE_WEB_API_KEY", "")
+    
+    # JWT Configuration
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "dev-jwt-secret")
+    JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
+    JWT_EXPIRATION_HOURS: int = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
+    
+    # Security & Privacy
+    DEFAULT_RETENTION_DAYS: int = int(os.getenv("DEFAULT_RETENTION_DAYS", "90"))
+    EPHEMERAL_PROCESSING_ENABLED: bool = os.getenv("EPHEMERAL_PROCESSING_ENABLED", "true").lower() == "true"
+    
+    # Monitoring & Observability
+    ENABLE_PROMETHEUS_METRICS: bool = os.getenv("ENABLE_PROMETHEUS_METRICS", "true").lower() == "true"
+    METRICS_PORT: int = int(os.getenv("METRICS_PORT", "9090"))
+    ENABLE_CLOUD_TRACE: bool = os.getenv("ENABLE_CLOUD_TRACE", "true").lower() == "true"
+    TRACE_SAMPLING_RATE: float = float(os.getenv("TRACE_SAMPLING_RATE", "0.1"))
+    ENABLE_ERROR_REPORTING: bool = os.getenv("ENABLE_ERROR_REPORTING", "true").lower() == "true"
+    ERROR_REPORTING_SERVICE: str = os.getenv("ERROR_REPORTING_SERVICE", "cloud-error-reporting")
+    STRUCTURED_LOGGING: bool = os.getenv("STRUCTURED_LOGGING", "true").lower() == "true"
+    
+    # Feature Flags
+    ENABLE_HUMAN_REVIEW: bool = os.getenv("ENABLE_HUMAN_REVIEW", "true").lower() == "true"
+    ENABLE_EXPORTS: bool = os.getenv("ENABLE_EXPORTS", "true").lower() == "true"
+    ENABLE_BATCH_PROCESSING: bool = os.getenv("ENABLE_BATCH_PROCESSING", "false").lower() == "true"
+    
+    @property
+    def retrieval_weights(self) -> Dict[str, float]:
+        """Get retrieval scoring weights as dict."""
+        return {
+            "sparse": self.RETRIEVAL_SPARSE_WEIGHT,
+            "dense": self.RETRIEVAL_DENSE_WEIGHT,
+            "label": self.RETRIEVAL_LABEL_WEIGHT,
+            "jurisdiction": self.RETRIEVAL_JURISDICTION_WEIGHT,
+            "template": self.RETRIEVAL_TEMPLATE_WEIGHT
+        }
+    
+    @property
+    def gemini_config(self) -> Dict[str, any]:
+        """Get Gemini generation configuration."""
+        return {
+            "model": self.VERTEX_GENERATION_MODEL,
+            "temperature": self.GENERATION_TEMPERATURE,
+            "max_output_tokens": self.GENERATION_MAX_TOKENS,
+            "top_p": self.GENERATION_TOP_P
+        }
+    
+    @property
+    def elasticsearch_config(self) -> Dict[str, any]:
+        """Get Elasticsearch configuration."""
+        return {
+            "host": self.ELASTICSEARCH_HOST,
+            "port": self.ELASTICSEARCH_PORT,
+            "index": self.ELASTICSEARCH_INDEX,
+            "username": self.ELASTICSEARCH_USERNAME,
+            "password": self.ELASTICSEARCH_PASSWORD,
+            "use_ssl": self.ELASTICSEARCH_USE_SSL
+        }
+    
+    def validate_required_fields(self) -> List[str]:
+        """Validate required configuration fields and return errors."""
+        errors = []
+        
+        # Required Google Cloud settings
+        if not self.GOOGLE_CLOUD_PROJECT:
+            errors.append("GOOGLE_CLOUD_PROJECT is required")
+        
+        if not self.GCS_BUCKET:
+            errors.append("GCS_BUCKET is required")
+        
+        if not self.DOCUMENT_AI_PROCESSOR_ID:
+            errors.append("DOCUMENT_AI_PROCESSOR_ID is required")
+        
+        # Security validations
+        if self.ENABLE_FIREBASE_AUTH and not self.FIREBASE_PROJECT_ID:
+            errors.append("FIREBASE_PROJECT_ID is required when Firebase auth is enabled")
+        
+        if not self.SECRET_KEY:
+            errors.append("SECRET_KEY is required")
+        
+        if not self.JWT_SECRET_KEY:
+            errors.append("JWT_SECRET_KEY is required")
+        
+        # AI model validations
+        if self.VERIFICATION_THRESHOLD < 0.5 or self.VERIFICATION_THRESHOLD > 1.0:
+            errors.append("VERIFICATION_THRESHOLD must be between 0.5 and 1.0")
+        
+        # Weights validation
+        total_weight = sum(self.retrieval_weights.values())
+        if abs(total_weight - 1.0) > 0.01:
+            errors.append(f"Retrieval weights must sum to 1.0, got {total_weight}")
+        
+        return errors
+    
+    def is_production(self) -> bool:
+        """Check if running in production environment."""
+        return self.ENVIRONMENT.lower() == "production"
+    
+    def is_development(self) -> bool:
+        """Check if running in development environment."""
+        return self.ENVIRONMENT.lower() == "development"
+
+
+@lru_cache()
+def get_settings() -> Settings:
+    """Get cached settings instance."""
+    return Settings()
+
+
+# Global settings instance  
+settings = get_settings()

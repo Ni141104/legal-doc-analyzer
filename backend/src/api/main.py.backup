@@ -1,0 +1,422 @@
+"""
+Main FastAPI application for the Legal Document Analyzer.
+Provides REST API endpoints for document processing and analysis.
+"""
+
+import asyncio
+import logging
+import time
+from contextlib import asynccontextmanager
+from typing import Dict, List, Optional
+
+from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+from ..models.schemas import (
+    DocumentUploadResponse, DocumentClausesResponse, QueryRequest, QueryResponse,
+    HumanReviewRequest, HumanReviewResponse, ExportRequest, HealthCheckResponse,
+    ClauseCard, ClauseRecord, DocumentMetadata
+)
+from ..models.config import settings
+from .orchestrator import DocumentOrchestrator
+
+# Configure logging
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+# Security
+security = HTTPBearer(auto_error=False)
+
+# Global orchestrator instance
+orchestrator: Optional[DocumentOrchestrator] = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan management."""
+    global orchestrator
+    
+    # Startup
+    logger.info("Starting Legal Document Analyzer API...")
+    try:
+        orchestrator = DocumentOrchestrator()
+        await orchestrator.initialize()
+        logger.info("API startup complete")
+        yield
+    except Exception as e:
+        logger.error(f"Failed to start API: {e}")
+        raise
+    
+    # Shutdown
+    logger.info("Shutting down API...")
+    if orchestrator:
+        await orchestrator.cleanup()
+    logger.info("API shutdown complete")
+
+
+# Create FastAPI app
+app = FastAPI(
+    title="Legal Document Analyzer API",
+    description="Production-ready API for analyzing legal documents with anti-hallucination measures",
+    version=settings.APP_VERSION,
+    lifespan=lifespan
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:8080"],  # Frontend URLs
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Extract user from JWT token."""
+    if not credentials:
+        return None
+    
+    try:
+        # In production, validate JWT token here
+        # For demo, we'll use a simple approach
+        token = credentials.credentials
+        if token == "demo-token":
+            return {"user_id": "demo-user", "email": "demo@example.com"}
+        return None
+    except Exception:
+        return None
+
+
+def require_auth(user=Depends(get_current_user)):
+    """Require authentication."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    return user
+
+
+@app.get("/", response_model=HealthCheckResponse)
+async def root():
+    """Root endpoint with basic health check."""
+    return HealthCheckResponse(
+        status="healthy",
+        version=settings.APP_VERSION,
+        services={
+            "document_ai": "available",
+            "vertex_ai": "available", 
+            "vector_store": "available",
+            "database": "available"
+        }
+    )
+
+
+@app.get("/health", response_model=HealthCheckResponse)
+async def health_check():
+    """Detailed health check endpoint."""
+    if not orchestrator:
+        raise HTTPException(status_code=503, detail="Service not initialized")
+    
+    try:
+        health_status = await orchestrator.health_check()
+        return HealthCheckResponse(
+            status="healthy" if all(status == "healthy" for status in health_status.values()) else "degraded",
+            version=settings.APP_VERSION,
+            services=health_status
+        )
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        raise HTTPException(status_code=503, detail="Health check failed")
+
+
+@app.post("/v1/docs/upload", response_model=DocumentUploadResponse)
+async def upload_document(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    ephemeral: bool = False,
+    user=Depends(require_auth)
+):
+    """Upload and process a legal document."""
+    if not orchestrator:
+        raise HTTPException(status_code=503, detail="Service not initialized")
+    
+    try:
+        # Validate file
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="No file provided")
+        
+        if file.content_type not in ["application/pdf", "text/plain", "application/msword"]:
+            raise HTTPException(status_code=400, detail="Unsupported file type")
+        
+        # Read file content
+        content = await file.read()
+        
+        if len(content) > 50 * 1024 * 1024:  # 50MB limit
+            raise HTTPException(status_code=413, detail="File too large")
+        
+        # Process document
+        result = await orchestrator.upload_document(
+            filename=file.filename,
+            content=content,
+            content_type=file.content_type,
+            user_id=user["user_id"],
+            ephemeral=ephemeral
+        )
+        
+        # Schedule background processing if needed
+        if result.processing_status == "processing":
+            background_tasks.add_task(
+                orchestrator.process_document_background,
+                result.doc_id
+            )
+        
+        logger.info(f"Document uploaded: {result.doc_id} by user {user['user_id']}")
+        return result
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Document upload failed: {e}")
+        raise HTTPException(status_code=500, detail="Upload failed")
+
+
+@app.get("/v1/docs/{doc_id}/clauses", response_model=DocumentClausesResponse)
+async def get_document_clauses(
+    doc_id: str,
+    page: int = 1,
+    page_size: int = 50,
+    clause_type: Optional[str] = None,
+    user=Depends(require_auth)
+):
+    """Get clauses from a processed document."""
+    if not orchestrator:
+        raise HTTPException(status_code=503, detail="Service not initialized")
+    
+    try:
+        result = await orchestrator.get_document_clauses(
+            doc_id=doc_id,
+            user_id=user["user_id"],
+            page=page,
+            page_size=page_size,
+            clause_type=clause_type
+        )
+        
+        return result
+    
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to get clauses for {doc_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve clauses")
+
+
+@app.post("/v1/docs/{doc_id}/query", response_model=QueryResponse)
+async def query_document(
+    doc_id: str,
+    request: QueryRequest,
+    user=Depends(require_auth)
+):
+    """Query a document for specific information."""
+    if not orchestrator:
+        raise HTTPException(status_code=503, detail="Service not initialized")
+    
+    try:
+        # Validate request
+        if len(request.query.strip()) < 3:
+            raise HTTPException(status_code=400, detail="Query too short")
+        
+        # Update request with doc_id
+        request.doc_id = doc_id
+        
+        # Process query
+        start_time = time.time()
+        result = await orchestrator.process_query(request, user["user_id"])
+        processing_time = (time.time() - start_time) * 1000
+        
+        # Update result with timing
+        result.processing_time_ms = processing_time
+        
+        logger.info(f"Query processed for {doc_id}: '{request.query[:50]}...' in {processing_time:.1f}ms")
+        return result
+    
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Query processing failed: {e}")
+        raise HTTPException(status_code=500, detail="Query processing failed")
+
+
+@app.post("/v1/clauses/{clause_id}/verify")
+async def request_human_review(
+    clause_id: str,
+    request: HumanReviewRequest,
+    user=Depends(require_auth)
+):
+    """Request human attorney review for a clause."""
+    if not orchestrator:
+        raise HTTPException(status_code=503, detail="Service not initialized")
+    
+    try:
+        # Update request with metadata
+        request.clause_id = clause_id
+        request.requester_id = user["user_id"]
+        
+        review_id = await orchestrator.request_human_review(request)
+        
+        return {"review_id": review_id, "status": "requested"}
+    
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Human review request failed: {e}")
+        raise HTTPException(status_code=500, detail="Review request failed")
+
+
+@app.get("/v1/reviews/{review_id}", response_model=HumanReviewResponse)
+async def get_review_status(
+    review_id: str,
+    user=Depends(require_auth)
+):
+    """Get status of human review request."""
+    if not orchestrator:
+        raise HTTPException(status_code=503, detail="Service not initialized")
+    
+    try:
+        result = await orchestrator.get_review_status(review_id, user["user_id"])
+        return result
+    
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to get review status: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get review status")
+
+
+@app.post("/v1/docs/{doc_id}/export")
+async def export_document(
+    doc_id: str,
+    request: ExportRequest,
+    background_tasks: BackgroundTasks,
+    user=Depends(require_auth)
+):
+    """Export document analysis as negotiation pack."""
+    if not orchestrator:
+        raise HTTPException(status_code=503, detail="Service not initialized")
+    
+    try:
+        # Update request with doc_id
+        request.doc_id = doc_id
+        
+        # Start export process
+        export_id = await orchestrator.start_export(request, user["user_id"])
+        
+        # Schedule background export generation
+        background_tasks.add_task(
+            orchestrator.generate_export_background,
+            export_id
+        )
+        
+        return {
+            "export_id": export_id,
+            "status": "processing",
+            "estimated_completion": "2-5 minutes"
+        }
+    
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Export request failed: {e}")
+        raise HTTPException(status_code=500, detail="Export request failed")
+
+
+@app.get("/v1/exports/{export_id}")
+async def get_export_status(
+    export_id: str,
+    user=Depends(require_auth)
+):
+    """Get status of document export."""
+    if not orchestrator:
+        raise HTTPException(status_code=503, detail="Service not initialized")
+    
+    try:
+        result = await orchestrator.get_export_status(export_id, user["user_id"])
+        return result
+    
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to get export status: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get export status")
+
+
+@app.delete("/v1/docs/{doc_id}")
+async def delete_document(
+    doc_id: str,
+    user=Depends(require_auth)
+):
+    """Delete a document and all associated data."""
+    if not orchestrator:
+        raise HTTPException(status_code=503, detail="Service not initialized")
+    
+    try:
+        await orchestrator.delete_document(doc_id, user["user_id"])
+        return {"status": "deleted", "doc_id": doc_id}
+    
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Document deletion failed: {e}")
+        raise HTTPException(status_code=500, detail="Deletion failed")
+
+
+@app.get("/v1/metrics")
+async def get_metrics(user=Depends(require_auth)):
+    """Get system performance metrics."""
+    if not orchestrator:
+        raise HTTPException(status_code=503, detail="Service not initialized")
+    
+    try:
+        metrics = await orchestrator.get_system_metrics()
+        return metrics
+    
+    except Exception as e:
+        logger.error(f"Failed to get metrics: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get metrics")
+
+
+# Error handlers
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    """Handle HTTP exceptions with proper logging."""
+    logger.warning(f"HTTP {exc.status_code}: {exc.detail} - {request.url}")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail, "type": "http_error"}
+    )
+
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc):
+    """Handle unexpected exceptions."""
+    logger.error(f"Unhandled exception: {exc} - {request.url}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error", "type": "server_error"}
+    )
+
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    uvicorn.run(
+        "src.api.main:app",
+        host=settings.API_HOST,
+        port=settings.API_PORT,
+        workers=1,  # Use 1 worker for development
+        log_level=settings.LOG_LEVEL.lower(),
+        reload=settings.DEBUG
+    )
