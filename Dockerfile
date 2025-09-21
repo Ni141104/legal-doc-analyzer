@@ -50,5 +50,5 @@ RUN mkdir -p /app/logs /app/temp
 ENV PORT=8080
 EXPOSE $PORT
 
-# Start command with proper port binding
-CMD python -m uvicorn simple_main:app --host 0.0.0.0 --port $PORT --log-level info
+# Start command with proper port binding using shell form for env var expansion
+CMD ["sh", "-c", "python -m uvicorn simple_main:app --host 0.0.0.0 --port ${PORT:-8080} --log-level info"]
