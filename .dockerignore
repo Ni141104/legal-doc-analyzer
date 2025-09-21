@@ -1,0 +1,47 @@
+# Ignore development files
+.git
+.gitignore
+README.md
+.env*
+.vscode
+.DS_Store
+
+# Ignore frontend (not needed for backend build)
+frontend/
+docs/
+demo/
+tests/
+
+# Ignore Python cache
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Ignore logs and temp files
+logs/
+*.log
+temp/
+*.tmp
+
+# Ignore deployment files not needed in container
+deploy.sh
+docker-compose*
+.python-version
+requirements-dev.txt
