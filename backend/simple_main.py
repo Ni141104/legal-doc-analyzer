@@ -67,7 +67,7 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"],
+    allow_origins=["*"],  # More permissive for deployment
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -76,6 +76,17 @@ app.add_middleware(
 # In-memory storage for development
 documents_db: Dict[str, Dict] = {}
 analysis_db: Dict[str, DocumentAnalysisResult] = {}
+
+@app.on_event("startup")
+async def startup_event():
+    """Startup event handler"""
+    logger.info("🚀 Legal Document Analyzer API is starting up...")
+    logger.info("✅ Application initialized successfully")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Shutdown event handler"""
+    logger.info("🛑 Legal Document Analyzer API is shutting down...")
 
 @app.get("/", response_model=Dict[str, str])
 async def root():

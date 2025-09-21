@@ -46,8 +46,9 @@ COPY backend/ .
 # Create necessary directories
 RUN mkdir -p /app/logs /app/temp
 
-# Expose port
-EXPOSE 8080
+# Expose port (Railway will set PORT env var)
+ENV PORT=8080
+EXPOSE $PORT
 
-# Start command
-CMD ["python", "-m", "uvicorn", "simple_main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Start command with proper port binding
+CMD python -m uvicorn simple_main:app --host 0.0.0.0 --port $PORT --log-level info
